@@ -18,7 +18,7 @@ exports.register = async (req, res) => {
 
         // Generate email verification token
         const emailToken = jwt.sign({ id: user.id }, process.env.JWT_EMAIL_SECRET, { expiresIn: '1d' });
-        const url = `https://assignmentbackend-production-c9be.up.railway.app/api/auth/verify-email/${emailToken}`;
+        const url = `http://localhost:5000/api/auth/verify-email/${emailToken}`;
 
         await sendEmail(user.email, 'Verify your email', `<p>Click <a href="${url}">here</a> to verify your email</p>`);
 
@@ -35,9 +35,9 @@ exports.verifyEmail = async (req, res) => {
     try {
         const token = req.params.token;
         const decoded = jwt.verify(token, process.env.JWT_EMAIL_SECRET);
-console.log(decoded,'decoded');
+        console.log(decoded, 'decoded');
         const user = await User.findByPk(decoded.id);
-        console.log(user,'user here');
+        console.log(user, 'user here');
         if (!user) return res.redirect(`${process.env.FRONTEND_URL}/login?verified=failed`);
 
         user.isVerified = true;
@@ -113,8 +113,23 @@ exports.forgotPassword = async (req, res) => {
 exports.resetPassword = async (req, res) => {
     try {
         const { token, password } = req.body;
-        const users = await User.findAll();
-        const user = users.find(async u => await bcrypt.compare(token, u.resetPasswordToken));
+
+        const users = await User.findAll({
+            where: {
+                resetPasswordToken: { [require('sequelize').Op.ne]: null },
+                resetPasswordExpires: { [require('sequelize').Op.gt]: Date.now() }
+            }
+        });
+
+        let user = null;
+        for (const u of users) {
+            const match = await bcrypt.compare(token, u.resetPasswordToken);
+            if (match) {
+                user = u;
+                break;
+            }
+        }
+
         if (!user) return res.status(400).json({ message: 'Invalid or expired token' });
 
         user.password = await bcrypt.hash(password, 10);
@@ -124,6 +139,8 @@ exports.resetPassword = async (req, res) => {
 
         res.json({ message: 'Password reset successful' });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ message: 'Server error' });
     }
 };
+
