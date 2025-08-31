@@ -35,8 +35,9 @@ exports.verifyEmail = async (req, res) => {
     try {
         const token = req.params.token;
         const decoded = jwt.verify(token, process.env.JWT_EMAIL_SECRET);
-
+console.log(decoded,'decoded');
         const user = await User.findByPk(decoded.id);
+        console.log(user,'user here');
         if (!user) return res.redirect(`${process.env.FRONTEND_URL}/login?verified=failed`);
 
         user.isVerified = true;
