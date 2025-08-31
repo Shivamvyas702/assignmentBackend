@@ -18,7 +18,7 @@ exports.register = async (req, res) => {
 
         // Generate email verification token
         const emailToken = jwt.sign({ id: user.id }, process.env.JWT_EMAIL_SECRET, { expiresIn: '1d' });
-        const url = `${process.env.FRONTEND_URL}/verify-email/${emailToken}`;
+        const url = `https://assignmentbackend-production-c9be.up.railway.app/verify-email/${emailToken}`;
 
         await sendEmail(user.email, 'Verify your email', `<p>Click <a href="${url}">here</a> to verify your email</p>`);
 
@@ -30,21 +30,25 @@ exports.register = async (req, res) => {
 };
 
 // Verify Email
+// authController.js
 exports.verifyEmail = async (req, res) => {
     try {
         const token = req.params.token;
         const decoded = jwt.verify(token, process.env.JWT_EMAIL_SECRET);
         const user = await User.findByPk(decoded.id);
-        if (!user) return res.status(404).json({ message: 'User not found' });
+        if (!user) return res.status(404).send('User not found');
 
         user.isVerified = true;
         await user.save();
 
-        res.json({ message: 'Email verified successfully' });
+        // Redirect to frontend login page after verification
+        res.redirect(`${process.env.FRONTEND_URL}/login?verified=true`);
     } catch (error) {
-        res.status(400).json({ message: 'Invalid or expired token' });
+        console.error(error);
+        res.status(400).send('Invalid or expired token');
     }
 };
+
 
 // Login User
 exports.login = async (req, res) => {
