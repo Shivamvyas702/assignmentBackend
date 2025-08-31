@@ -17,7 +17,19 @@ app.use('/api/users', userRoutes);
 
 const PORT = process.env.PORT || 5000;
 
-sequelize.sync().then(() => {
+const startServer = async () => {
+  try {
+    await sequelize.authenticate();
     console.log('Database connected');
+
+    // Optional: sync models if needed
+    // await sequelize.sync({ alter: true });
+
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-});
+  } catch (err) {
+    console.error('Unable to connect to database:', err);
+    process.exit(1); // Stop process if DB cannot connect
+  }
+};
+
+startServer();
