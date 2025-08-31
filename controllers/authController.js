@@ -18,7 +18,7 @@ exports.register = async (req, res) => {
 
         // Generate email verification token
         const emailToken = jwt.sign({ id: user.id }, process.env.JWT_EMAIL_SECRET, { expiresIn: '1d' });
-        const url = `https://assignmentbackend-production-c9be.up.railway.app/verify-email/${emailToken}`;
+        const url = `https://assignmentbackend-production-c9be.up.railway.app/api/auth/verify-email/${emailToken}`;
 
         await sendEmail(user.email, 'Verify your email', `<p>Click <a href="${url}">here</a> to verify your email</p>`);
 
