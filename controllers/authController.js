@@ -35,17 +35,17 @@ exports.verifyEmail = async (req, res) => {
     try {
         const token = req.params.token;
         const decoded = jwt.verify(token, process.env.JWT_EMAIL_SECRET);
+
         const user = await User.findByPk(decoded.id);
-        if (!user) return res.status(404).send('User not found');
+        if (!user) return res.redirect(`${process.env.FRONTEND_URL}/login?verified=failed`);
 
         user.isVerified = true;
         await user.save();
 
-        // Redirect to frontend login page after verification
         res.redirect(`${process.env.FRONTEND_URL}/login?verified=true`);
     } catch (error) {
         console.error(error);
-        res.status(400).send('Invalid or expired token');
+        res.redirect(`${process.env.FRONTEND_URL}/login?verified=failed`);
     }
 };
 
